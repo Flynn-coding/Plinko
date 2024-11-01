@@ -1,0 +1,62 @@
+const board = document.getElementById('board');
+const playButton = document.getElementById('playButton');
+const budgetInput = document.getElementById('budgetInput');
+const resultDiv = document.getElementById('result');
+
+const rows = 10; // Number of rows in the Plinko board
+const pinsPerRow = 9; // Number of pins in each row
+const dropLocations = Array.from({ length: pinsPerRow }, (_, i) => i * (board.offsetWidth / pinsPerRow));
+
+function createPins() {
+    const pins = document.createElement('div');
+    pins.className = 'pins';
+    for (let r = 0; r < rows; r++) {
+        for (let p = 0; p < pinsPerRow; p++) {
+            const pin = document.createElement('div');
+            pin.className = 'pin';
+            pin.style.top = `${r * (board.offsetHeight / rows) + (board.offsetHeight / (rows * 2))}px`;
+            pin.style.left = `${(p * (board.offsetWidth / pinsPerRow)) + (board.offsetWidth / (pinsPerRow * 2))}px`;
+            pins.appendChild(pin);
+        }
+    }
+    board.appendChild(pins);
+}
+
+function dropBall() {
+    const budget = parseFloat(budgetInput.value);
+    if (isNaN(budget) || budget <= 0) {
+        alert('Please enter a valid budget');
+        return;
+    }
+
+    const ball = document.createElement('div');
+    ball.className = 'ball';
+    ball.style.left = `${(board.offsetWidth / 2) - 7.5}px`; // Center the ball
+    board.appendChild(ball);
+
+    let currentX = Math.floor(Math.random() * pinsPerRow);
+    let currentY = 0;
+
+    const dropInterval = setInterval(() => {
+        if (currentY < rows) {
+            ball.style.transform = `translateY(${(currentY + 1) * (board.offsetHeight / rows)}px)`;
+            if (currentY > 0) {
+                currentX += Math.random() < 0.5 ? -1 : 1; // Randomly move left or right
+                currentX = Math.max(0, Math.min(currentX, pinsPerRow - 1)); // Keep in bounds
+                ball.style.left = `${dropLocations[currentX]}px`;
+            }
+            currentY++;
+        } else {
+            clearInterval(dropInterval);
+            calculateResult(currentX, budget);
+        }
+    }, 200); // Drop interval (200ms)
+}
+
+function calculateResult(finalPosition, budget) {
+    const winnings = budget / (finalPosition + 1); // Simple payout logic
+    resultDiv.innerText = `You won: $${winnings.toFixed(2)}`;
+}
+
+playButton.addEventListener('click', dropBall);
+createPins();
